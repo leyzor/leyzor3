@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>leyzor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+```
+    :root { --border: rgba(255,255,255,0.08); }
+
+    body, html {
+        height: 100%;
+        font-family: 'Syne', sans-serif;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
+    }
+
+    /* ─── ENTER SCREEN ─── */
+    #enter-screen {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        cursor: pointer;
+        gap: 18px;
+        transition: opacity 0.8s ease;
+    }
+
+    .pulse-ring {
+        width: 76px; height: 76px;
+        border: 1.5px solid rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        animation: pulseAnim 2.2s infinite;
+    }
+    .pulse-ring svg { width: 26px; height: 26px; fill: white; opacity: 0.85; }
+
+    @keyframes pulseAnim {
+        0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.12); }
+        50%      { transform: scale(1.06); box-shadow: 0 0 0 14px rgba(255,255,255,0); }
+    }
+
+    #enter-screen p {
+        font-family: 'Space Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.3);
+    }
+
+    /* ─── BG VIDEO ─── */
+    .bg-video {
+        position: fixed;
+        top: 50%; left: 50%;
+        min-width: 100%; min-height: 100%;
+        width: auto; height: auto;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+        filter: brightness(0.3) saturate(0.7);
+        object-fit: cover;
+    }
+
+    /* ─── VIGNETTE ─── */
+    .vignette {
+        position: fixed; inset: 0; z-index: 1;
+        background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.9) 100%);
+        pointer-events: none;
+    }
+
+    /* ─── MAIN ─── */
+    #main-content {
+        position: relative; z-index: 10;
+        height: 100%;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        gap: 16px;
+        opacity: 0;
+        transition: opacity 1.2s ease;
+    }
+
+    /* ─── SITE NAME ─── */
+    .site-name {
+        font-size: clamp(48px, 9vw, 80px);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        text-shadow: 0 0 80px rgba(255,255,255,0.12);
+        opacity: 0; transform: translateY(24px);
+        transition: opacity 0.9s ease, transform 0.9s ease;
+        margin-bottom: 6px;
+    }
+
+    /* ─── SHARED CARD STYLE ─── */
+    .card {
+        display: flex; align-items: center; gap: 18px;
+        background: rgba(8,8,8,0.6);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 18px 26px;
+        width: 320px;
+        opacity: 0; transform: translateY(24px);
+        box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+        transition:
+            opacity 0.9s ease,
+            transform 0.9s ease,
+            background 0.3s,
+            border-color 0.3s,
+            box-shadow 0.3s;
+    }
+
+    .card:hover {
+        background: rgba(18,18,18,0.75);
+        border-color: rgba(255,255,255,0.14);
+        box-shadow: 0 20px 70px rgba(0,0,0,0.8);
+        transform: translateY(-4px) !important;
+    }
+
+    /* ─── DISCORD CARD ─── */
+    #profile-card {
+        text-decoration: none; color: inherit; cursor: pointer;
+        transition-delay: 0.15s;
+    }
+
+    .avatar-wrap { position: relative; flex-shrink: 0; }
+    .avatar-wrap img {
+        width: 68px; height: 68px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255,255,255,0.08);
+        background: #111;
+        display: block;
+    }
+
+    .status-dot {
+        position: absolute; bottom: 2px; right: 2px;
+        width: 15px; height: 15px;
+        border-radius: 50%;
+        border: 2.5px solid #080808;
+        background: #747f8d;
+        transition: background 0.4s;
+    }
+    .status-dot.online  { background: #3ba55d; }
+    .status-dot.idle    { background: #faa61a; }
+    .status-dot.dnd     { background: #ed4245; }
+    .status-dot.offline { background: #747f8d; }
+
+    .profile-info { display: flex; flex-direction: column; gap: 4px; }
+    .profile-username { font-size: 19px; font-weight: 700; line-height: 1; }
+    .profile-tag {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.04em;
+    }
+    .profile-activity {
+        font-family: 'Space Mono', monospace;
+        font-size: 10px; color: rgba(255,255,255,0.42);
+        margin-top: 4px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 200px;
+    }
+
+    /* ─── SPOTIFY CARD ─── */
+    #spotify-card {
+        transition-delay: 0.28s;
+        border-color: rgba(30, 215, 96, 0.15);
+    }
+
+    #spotify-card:hover {
+        border-color: rgba(30, 215, 96, 0.28) !important;
+    }
+
+    #spotify-card.hidden { display: none; }
+
+    .spotify-icon {
+        flex-shrink: 0;
+        width: 42px; height: 42px;
+    }
+
+    .spotify-info { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+
+    .spotify-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #1ed760;
+        opacity: 0.8;
+    }
+
+    .spotify-title {
+        font-size: 15px; font-weight: 700;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 210px;
+        color: #fff;
+    }
+
+    .spotify-artist {
+        font-family: 'Space Mono', monospace;
+        font-size: 10px;
+        color: rgba(255,255,255,0.38);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 210px;
+    }
+
+    /* scrolling text animation */
+    @keyframes scrollText {
+        0%   { transform: translateX(0); }
+        40%  { transform: translateX(0); }
+        90%  { transform: translateX(var(--scroll-amount, -50%)); }
+        100% { transform: translateX(var(--scroll-amount, -50%)); }
+    }
+
+    .scroll-text {
+        display: inline-block;
+        animation: scrollText 6s ease-in-out infinite alternate;
+    }
+
+    /* ─── FOOTER ─── */
+    .footer {
+        opacity: 0; transform: translateY(16px);
+        transition: opacity 0.9s ease 0.42s, transform 0.9s ease 0.42s;
+        font-family: 'Space Mono', monospace;
+        font-size: 9px; letter-spacing: 0.18em;
+        text-transform: uppercase; color: rgba(255,255,255,0.18);
+    }
+
+    /* ─── REVEAL ─── */
+    .revealed { opacity: 1 !important; transform: translateY(0) !important; }
+
+    /* ─── MOBILE ─── */
+    @media (max-width: 480px) {
+        .site-name { font-size: 46px; }
+        .card { width: 280px; padding: 14px 18px; gap: 14px; }
+        .avatar-wrap img { width: 56px; height: 56px; }
+        .profile-username { font-size: 17px; }
+    }
+</style>
+```
+
+</head>
+<body>
+
+```
+<div id="enter-screen">
+    <div class="pulse-ring">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <p>cliquer pour entrer</p>
+</div>
+
+<video id="bg-video" class="bg-video" loop playsinline muted>
+    <source src="video.mp4" type="video/mp4">
+</video>
+<audio id="bg-music" loop>
+    <source src="musique.mp3" type="audio/mpeg">
+</audio>
+<div class="vignette"></div>
+
+<div id="main-content">
+    <div class="site-name" id="site-name">leyzor</div>
+
+    <!-- Discord card -->
+    <a class="card" id="profile-card"
+       href="https://discord.com/users/172383880677031938"
+       target="_blank" rel="noopener">
+        <div class="avatar-wrap">
+            <img id="avatar-img" src="" alt="avatar">
+            <span class="status-dot offline" id="status-dot"></span>
+        </div>
+        <div class="profile-info">
+            <div class="profile-username" id="profile-username">leyzor</div>
+            <div class="profile-tag" id="profile-tag">@creditagricall</div>
+            <div class="profile-activity" id="profile-activity">Chargement…</div>
+        </div>
+    </a>
+
+    <!-- Spotify card (cachée si pas de musique) -->
+    <div class="card hidden" id="spotify-card">
+        <!-- Spotify logo SVG -->
+        <svg class="spotify-icon" viewBox="0 0 168 168" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="84" cy="84" r="84" fill="#1ED760"/>
+            <path d="M120.8 117.3c-1.6 2.6-5 3.4-7.6 1.8-20.8-12.7-47-15.6-77.8-8.5-3 .7-6-1.2-6.7-4.1-.7-3 1.2-6 4.1-6.7 33.7-7.7 62.6-4.4 85.9 9.9 2.6 1.6 3.4 5 1.8 7.6zm10.2-22.7c-2 3.2-6.2 4.2-9.4 2.2-23.8-14.6-60-18.8-88.1-10.3-3.4 1-7-1-8-4.4s1-7 4.4-8C63.3 64.1 103 68.8 130 85.4c3.2 2 4.2 6.2 2.2 9.4zM131.7 72c-28.6-17-75.7-18.6-103-10.3-4.1 1.2-8.4-1.1-9.6-5.2-1.2-4.1 1.1-8.4 5.2-9.6 31.4-9.5 83.6-7.7 116.6 11.9 3.7 2.2 4.9 7 2.7 10.7-2.2 3.7-7 4.9-10.7 2.7z" fill="#000"/>
+        </svg>
+        <div class="spotify-info">
+            <div class="spotify-label">En écoute</div>
+            <div class="spotify-title"><span class="scroll-text" id="spotify-title">—</span></div>
+            <div class="spotify-artist" id="spotify-artist">—</div>
+        </div>
+    </div>
+
+    <div class="footer" id="footer">discord • 172383880677031938</div>
+</div>
+
+<script>
+    const DISCORD_ID = '172383880677031938';
+
+    const enterScreen = document.getElementById('enter-screen');
+    const mainContent = document.getElementById('main-content');
+    const bgVideo     = document.getElementById('bg-video');
+    const bgMusic     = document.getElementById('bg-music');
+    const siteName    = document.getElementById('site-name');
+    const profileCard = document.getElementById('profile-card');
+    const spotifyCard = document.getElementById('spotify-card');
+    const footer      = document.getElementById('footer');
+
+    async function fetchDiscord() {
+        try {
+            const res  = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
+            const json = await res.json();
+            if (!json.success) return;
+
+            const d = json.data;
+            const u = d.discord_user;
+
+            // Avatar
+            const hash = u.avatar;
+            const ext  = hash?.startsWith('a_') ? 'gif' : 'png';
+            const avatarUrl = hash
+                ? `https://cdn.discordapp.com/avatars/${u.id}/${hash}.${ext}?size=128`
+                : `https://cdn.discordapp.com/embed/avatars/${Number(u.discriminator || 0) % 5}.png`;
+            document.getElementById('avatar-img').src = avatarUrl;
+
+            // Username
+            document.getElementById('profile-username').textContent = 'leyzor';
+            const tag = u.discriminator && u.discriminator !== '0'
+                ? `@${u.username}#${u.discriminator}`
+                : `@${u.username}`;
+            document.getElementById('profile-tag').textContent = tag;
+
+            // Status dot
+            const status = d.discord_status || 'offline';
+            document.getElementById('status-dot').className = `status-dot ${status}`;
+
+            // Activité discord
+            const actEl = document.getElementById('profile-activity');
+            const activities = d.activities || [];
+            const custom = activities.find(a => a.type === 4);
+            const other  = activities.find(a => a.type !== 4 && a.type !== 2);
+
+            if (custom?.state) {
+                actEl.textContent = `💬 ${custom.state}`;
+            } else if (other) {
+                const icons = { 0: '🎮', 1: '📡', 3: '📺' };
+                actEl.textContent = `${icons[other.type] || '▶'} ${other.name}`;
+            } else {
+                const labels = { online: '● En ligne', idle: '● Absent', dnd: '● Ne pas déranger', offline: '● Hors ligne' };
+                actEl.textContent = labels[status] || '';
+            }
+
+            // ── Spotify ──────────────────────────────────────────────
+            if (d.spotify && d.spotify.song) {
+                const sp = d.spotify;
+                const titleEl  = document.getElementById('spotify-title');
+                const artistEl = document.getElementById('spotify-artist');
+
+                titleEl.textContent  = sp.song;
+                artistEl.textContent = sp.artist;
+
+                // Scroll animation si titre trop long
+                const maxW = 210;
+                titleEl.style.removeProperty('--scroll-amount');
+                titleEl.style.animation = 'none';
+                requestAnimationFrame(() => {
+                    const w = titleEl.scrollWidth;
+                    if (w > maxW) {
+                        const pct = -((w - maxW) / w * 100);
+                        titleEl.style.setProperty('--scroll-amount', `${pct}%`);
+                        titleEl.style.animation = '';
+                    }
+                });
+
+                spotifyCard.classList.remove('hidden');
+                // Si déjà revealed, on s'assure qu'elle est visible
+                if (mainContent.style.opacity === '1') {
+                    spotifyCard.classList.add('revealed');
+                }
+            } else {
+                spotifyCard.classList.add('hidden');
+                spotifyCard.classList.remove('revealed');
+            }
+
+        } catch (e) {
+            document.getElementById('profile-activity').textContent = '';
+        }
+    }
+
+    fetchDiscord();
+    setInterval(fetchDiscord, 20000);
+
+    // ── Enter click ──────────────────────────────────────────────────
+    enterScreen.addEventListener('click', () => {
+        bgVideo.play();
+        bgMusic.volume = 0.45;
+        bgMusic.play().catch(() => {});
+
+        enterScreen.style.opacity = '0';
+        enterScreen.style.pointerEvents = 'none';
+
+        setTimeout(() => {
+            enterScreen.style.display = 'none';
+            mainContent.style.opacity = '1';
+
+            requestAnimationFrame(() => {
+                siteName.classList.add('revealed');
+                setTimeout(() => profileCard.classList.add('revealed'), 160);
+                setTimeout(() => {
+                    if (!spotifyCard.classList.contains('hidden')) {
+                        spotifyCard.classList.add('revealed');
+                    }
+                    footer.classList.add('revealed');
+                }, 320);
+            });
+        }, 700);
+    });
+</script>
+```
+
+</body>
+</html>
